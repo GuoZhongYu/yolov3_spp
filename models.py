@@ -3,6 +3,40 @@ from build_utils.parse_config import *
 
 ONNX_EXPORT = False
 
+class PrintLayer(nn.Module):
+    def __init__(self):
+        super(PrintLayer, self).__init__()
+
+    def forward(self, x):
+        # Do your print / debug stuff here
+        return x
+
+class SE(nn.Module):
+
+    def __init__(self, in_chnls=128, ratio=16):
+        super(SE, self).__init__()
+        self.squeeze = nn.AdaptiveAvgPool2d((1, 1))
+        self.compress = nn.Conv2d(in_chnls, in_chnls//ratio, 1, 1, 0)
+        self.excitation = nn.Conv2d(in_chnls//ratio, in_chnls, 1, 1, 0)
+
+    def forward(self, x):
+        out = self.squeeze(x)
+        out = self.compress(out)
+        out = torch.relu(out)
+        out = self.excitation(out)
+        out = torch.sigmoid(out)
+        out = x * out.expand_as(x)
+        out = out + x
+        return out
+
+class create_seb(nn.Module):
+    def __init__(self):
+        super(create_seb, self).__init__()
+
+    def forward(self, x):
+        device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
+        net = SE().to(device)
+        return net(x)
 
 def create_modules(modules_defs: list, img_size):
     """
@@ -61,6 +95,13 @@ def create_modules(modules_defs: list, img_size):
 
             if mdef["activation"] == "leaky":
                 modules.add_module("activation", nn.LeakyReLU(0.1, inplace=True))
+            else:
+                pass
+
+            # 这里是加入SEB模块的部分
+            if "flag_SEB" in mdef:
+                modules.add_module("Print_Layer", PrintLayer())
+                modules.add_module("create_SE", create_seb())
             else:
                 pass
 

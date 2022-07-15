@@ -300,7 +300,7 @@ if __name__ == '__main__':
     # 迭代训练的次数
     parser.add_argument('--epochs', type=int, default=30)
     # 每一批送入的样本数
-    parser.add_argument('--batch-size', type=int, default=8)
+    parser.add_argument('--batch-size', type=int, default=4)
     # 定义cfg的位置信息，包含的是网络的信息
     parser.add_argument('--cfg', type=str, default='cfg/my_yolov3.cfg', help="*.cfg path")
     # 定义data的位置信息
